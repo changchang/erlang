@@ -1,16 +1,15 @@
 -module(accept).
--export([start/2]).
+-export([start/1]).
 
-start(RegPid, LSocket) -> 
-	io:format("Accept processor started.~n", []), 
-	loop(RegPid, LSocket).
+start(LSocket) -> 
+	io:format("accept processor started.~n", []), 
+	loop(LSocket).
 
-loop(RegPid, LSocket) -> 
+loop(LSocket) -> 
 	case gen_tcp:accept(LSocket) of
 		{ok, Socket} -> 
-			Pid = spawn(receiver, start, [RegPid, Socket]), 
-			loop(RegPid, LSocket);
+			spawn(receiver, start, [Socket]), 
+			loop(LSocket);
 		{error, Reason} -> 
-			RegPid ! stop, 
-			io:format("Access socket error, ~p~n", [Reason])
+			io:format("accept processor stop, socket status:~p~n", [Reason])
 	end.

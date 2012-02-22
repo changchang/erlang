@@ -1,0 +1,3 @@
+-define(PRO_LOGIN, 1).
+-define(PRO_SEND_MSG, 2).
+-define(PRO_NEW_MSG, 3).

@@ -2,17 +2,17 @@
 -export([start/1]).
 
 start(Port) -> 
-	RegPid = spawn(register, start, []), 
+	register(reg_server, spawn(register, start, [])), 
 	case gen_tcp:listen(Port, [binary, {active, false}]) of 
 		{ok, LSocket} -> 
-			spawn(accept, start, [RegPid, LSocket]), 
+			spawn(accept, start, [LSocket]), 
 			Pid = spawn(shutdown, start, [LSocket]), 
-			io:format("Chat server started.~n", []), 
+			io:format("chat server started.~n", []), 
 			Pid;
 %			loop();
 		{error, Reason} -> 
-			RegPid ! stop, 
-			io:format("Fail to start server for ~p~n", [Reason])
+			reg_server ! stop, 
+			io:format("fail to start server for ~p~n", [Reason])
 	end.
 	
 %loop() -> 

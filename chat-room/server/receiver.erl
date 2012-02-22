@@ -1,22 +1,22 @@
 -module(receiver).
--export([start/2]).
+-export([start/1]).
 
 % enter for recv processor
-start(RegPid, Socket) -> 
-	wait_reg(RegPid, Socket).
+start(Socket) -> 
+	wait_reg(Socket).
 
 % wait for register request
-wait_reg(RegPid, Socket) -> 
+wait_reg(Socket) -> 
 	PRO_REG = 1, 
 	case gen_tcp:recv(Socket, 0) of
 		{ok, Binary} -> 
 			case parse_pkg(Binary) of 
 				{PRO_REG, Name} -> 
-					RegPid ! {reg, self(), Name, Socket}, 
-					io:format("Join a new user ~p~n", [Name]), 
-					loop(RegPid, Socket);
+					reg_server ! {reg, Name, Socket}, 
+					io:format("join a new user ~ts~n", [Name]), 
+					loop(Name, Socket);
 				_ -> 
-					io:format("Invalid request, closing connection.~n", []), 
+					io:format("invalid request, closing connection.~n", []), 
 					gen_tcp:close(Socket)
 			end;
 		{error, closed} -> 
@@ -24,26 +24,26 @@ wait_reg(RegPid, Socket) ->
 	end.
 
 % loop for recv client message
-loop(RegPid, Socket) -> 
+loop(Name, Socket) -> 
 	PRO_SEND_MSG = 2, 
 	case gen_tcp:recv(Socket, 0) of 
 		{ok, Binary} -> 
 			case parse_pkg(Binary) of 
 				{PRO_SEND_MSG, Msg} -> 
-					RegPid ! {msg, self(), Msg}, 
-					loop(RegPid, Socket);
+					reg_server ! {msg, Name, Msg}, 
+					loop(Name, Socket);
 				_ -> 
-					io:format("Ignore invalid request.~n", []), 
+					io:format("ignore invalid request.~n", []), 
 					gen_tcp:close(Socket)
 			end;
 		{error, closed} -> 
-			RegPid ! {close, self()}, 
+			reg_server ! {close, Name}, 
 			io:format("connection closed.~n", [])
 	end.
 
 % parse request package			
-parse_pkg(pkg) -> 
-	case pkg of 
+parse_pkg(Pkg) -> 
+	case Pkg of 
 		% ignore  length segment
 		<<Type:8/integer, _:16/integer, Content/binary>> -> 
 			{Type, Content};

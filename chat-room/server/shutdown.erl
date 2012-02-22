@@ -8,6 +8,7 @@ loop(LSocket) ->
 	receive 
 		stop -> 
 			gen_tcp:close(LSocket), 
+			reg_server ! stop, 
 			true;
 		_ -> loop(LSocket)
 	end.
