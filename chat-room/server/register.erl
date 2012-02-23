@@ -3,53 +3,51 @@
 
 % enter for register server
 start() ->
-	PidMap = dict:new(), 
-	loop(PidMap).
+	ClientMap = dict:new(), 
+	loop(ClientMap).
 
 % main loop for register server processor
-loop(PidMap) -> 
+loop(ClientMap) -> 
 	receive
 		{reg, Name, Socket} -> 
 			% register a new online user
-			loop(dict:store(Name, Socket, PidMap));
+			loop(dict:store(Name, Socket, ClientMap));
 		{msg, Name, Msg} -> 
 			% receive a new message
-			try dict:fetch(Name, PidMap) of
-				_ -> 
-					broadcast(Name, Msg, PidMap, dict:fetch_keys(PidMap)), 
-					loop(PidMap)
-			catch
-				error:Error -> 
-					io:format("fail to get socket by name. Name=~ts, Error=~ts~n", [Name, Error]), 
-					loop(PidMap)
-			end;
+			broadcast(Name, Msg, ClientMap), 
+			loop(ClientMap);
 		{close, Name} -> 
-			dict:erase(Name, PidMap), 
+			% close a client by recv processor
+			dict:erase(Name, ClientMap), 
 			io:format("logout user: ~ts~n", [Name]), 
-			loop(PidMap); 
+			loop(ClientMap); 
 		stop ->
 			% stop register server processor
+			closeSockets(ClientMap), 
 			io:format("register processor stop.~n", [])
 	end.
 
-% broadcast message to the other online user
-%broadcast(Sender, Msg, PidMap, [Sender | Names]) -> 
-%	broadcast(Sender, Msg, PidMap, Names);
+%% broadcast message to online user
+broadcast(SenderName, Msg, ClientMap) -> 
+	dict:map(fun(RecvName, Socket) -> 
+			if 
+				SenderName =:= RecvName -> 
+					% we will push the message to the sender, too
+					gen_tcp:send(Socket, protocol:newMsg(SenderName, Msg)), 
+					Socket;
+				true -> 
+					gen_tcp:send(Socket, protocol:newMsg(SenderName, Msg)), 
+					Socket
+			end
+		end,
+		ClientMap
+	).
 
-broadcast(Sender, Msg, PidMap, [Name | Names]) -> 
-	PRO_NEW_MSG = 3, 
-	try dict:fetch(Name, PidMap) of
-		Socket -> 
-			Content = list_to_binary(io_lib:format("~ts|~ts", [Sender, Msg])), 
-			Len = byte_size(Content), 
-			Data = <<PRO_NEW_MSG:8/integer, Len:16/integer, Content/binary>>, 
-			gen_tcp:send(Socket, Data)
-	catch
-		error:Error -> 
-			io:format("fail to get socket by name. Name=~ts, Error=~ts~n", [Name, Error])
-	end, 
-	broadcast(Sender, Msg, PidMap, Names);
-
-broadcast(_, _, _, []) ->
-	true. 
-	
+%% close all client connections
+closeSockets(ClientMap) -> 
+	dict:map(fun(_, Socket) -> 
+			gen_tcp:close(Socket), 
+			Socket
+		end,
+		ClientMap
+	).

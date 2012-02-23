@@ -10,8 +10,8 @@ start(Socket) ->
 loop(Socket) -> 
 	case gen_tcp:recv(Socket, 0) of
 		{ok, Package} -> 
-			case protocol:parse(Package) of 
-				{?PRO_NEW_MSG, Name, Msg} -> 
+		case protocol:parse(Package) of 
+				{?PRO_PSH_NEW_MSG, {body, Name, Msg}} -> 
 					io:format("~ts Say: ~ts~n", [Name, Msg]), 
 					loop(Socket);
 				_ -> 
