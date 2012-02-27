@@ -18,7 +18,7 @@ response(Type, Code) ->
 
 %% compose response
 response(Type, Code, Content) -> 
-	Data = list_to_binary(Content), 
+	Data = unicode:characters_to_binary(Content), 
 	Len = byte_size(Data), 
 	<<Type:8/integer, Code:8/integer, Len:16/integer, Data/binary>>.
 
@@ -28,13 +28,13 @@ push(Type) ->
 
 %% compose push message
 push(Type, Content) -> 
-	Data = list_to_binary(Content), 
+	Data = unicode:characters_to_binary(Content), 
 	Len = byte_size(Data), 
 	<<Type:8/integer, Len:16/integer, Data/binary>>. 
 
 %% compose new message push message
 new_msg(Sender, Msg) -> 
-	Content = list_to_binary(io_lib:format("~ts|~ts", [Sender, Msg])), 
+	Content = unicode:characters_to_binary(io_lib:format("~ts|~ts", [Sender, Msg])), 
 	Len = byte_size(Content), 
 	<<?PRO_PSH_NEW_MSG:8/integer, Len:16/integer, Content/binary>>.
 
@@ -50,7 +50,7 @@ new_msg(Sender, Msg) ->
 parse(Pkg) -> 
 	case Pkg of 
 		<<Type:8/integer, Len:16/integer, Body:Len/binary>> -> 
-			{Type, {body, binary_to_list(Body)}};
+			{Type, {body, unicode:characters_to_list(Body)}};
 		_ -> 
 			{error, bad_package}
 	end.

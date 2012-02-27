@@ -33,7 +33,7 @@ login(Name, Socket) ->
 
 %% loop to recv console input
 loop(Name, Socket) -> 
-	Line = string:strip(io:get_line(""), both, $\n), 
+	Line = string:strip(io:get_line("Chat:"), both, $\n), 
 	if 
 		Line =:= ?QUIT_CMD -> 
 			gen_tcp:close(Socket);

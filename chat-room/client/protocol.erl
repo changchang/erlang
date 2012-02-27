@@ -19,7 +19,7 @@ sendMsg(Msg) ->
 	compose(?PRO_REQ_SEND_MSG, Msg).
 
 compose(Type, Content) -> 
-	Data = list_to_binary(Content), 
+	Data = unicode:characters_to_binary(Content), 
 	Len = byte_size(Data), 
 	<<Type:8/integer, Len:16/integer, Data/binary>>.
 
@@ -61,7 +61,7 @@ parse_response(Type, Pkg) ->
 	case Pkg of 
 		<<Code:8/integer, Len:16/integer, Content:Len/binary>> -> 
 			% with content
-			{Type, Code, {body, binary_to_list(Content)}};
+			{Type, Code, {body, unicode:characters_to_list(Content)}};
 		<<Code:8/integer>> -> 
 			% no content
 			{Type, Code, body};
@@ -87,7 +87,7 @@ parse_push_msg(Type, Pkg) ->
 %% parse new message push
 %% return: {Type, {body, SenderName, Content}}
 parse_new_msg(Type, Pkg) -> 
-	Body = binary_to_list(Pkg), 
+	Body = unicode:characters_to_list(Pkg), 
 	Index = string:str(Body, ?SEP), 
 	if 
 		Index > 0 -> 
