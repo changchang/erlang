@@ -3,7 +3,7 @@
 
 start(Port) -> 
 	register(reg_server, spawn(register, start, [])), 
-	case gen_tcp:listen(Port, [binary, {active, false}]) of 
+	case gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}]) of 
 		{ok, LSocket} -> 
 			spawn(accept, start, [LSocket]), 
 			Pid = spawn(shutdown, start, [LSocket]), 

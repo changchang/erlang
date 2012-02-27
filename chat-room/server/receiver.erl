@@ -4,15 +4,15 @@
 
 % enter for recv processor
 start(Socket) -> 
-	waitRegister(Socket).
+	wait_login(Socket).
 
 % wait for register request
-waitRegister(Socket) -> 
+wait_login(Socket) -> 
 	case gen_tcp:recv(Socket, 0) of
 		{ok, Binary} -> 
 			case protocol:parse(Binary) of 
 				{?PRO_REQ_LOGIN, {body, Name}} -> 
-					registerUser(Name, Socket);
+					register_user(Name, Socket);
 				_ -> 
 					io:format("invalid request, closing connection.~n", []), 
 					gen_tcp:close(Socket)
@@ -23,7 +23,7 @@ waitRegister(Socket) ->
 
 %% register a user
 %% check the user whether has logined, register him/her to the reg_server and response to client
-registerUser(Name, Socket) -> 
+register_user(Name, Socket) -> 
 	case whereis(list_to_atom(Name)) of 
 		undefined -> 
 			register(list_to_atom(Name), self()), 

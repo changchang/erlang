@@ -23,7 +23,7 @@ loop(ClientMap) ->
 			loop(ClientMap); 
 		stop ->
 			% stop register server processor
-			closeSockets(ClientMap), 
+			close_socket(ClientMap), 
 			io:format("register processor stop.~n", [])
 	end.
 
@@ -33,10 +33,10 @@ broadcast(SenderName, Msg, ClientMap) ->
 			if 
 				SenderName =:= RecvName -> 
 					% we will push the message to the sender, too
-					gen_tcp:send(Socket, protocol:newMsg(SenderName, Msg)), 
+					gen_tcp:send(Socket, protocol:new_msg(SenderName, Msg)), 
 					Socket;
 				true -> 
-					gen_tcp:send(Socket, protocol:newMsg(SenderName, Msg)), 
+					gen_tcp:send(Socket, protocol:new_msg(SenderName, Msg)), 
 					Socket
 			end
 		end,
@@ -44,7 +44,7 @@ broadcast(SenderName, Msg, ClientMap) ->
 	).
 
 %% close all client connections
-closeSockets(ClientMap) -> 
+close_socket(ClientMap) -> 
 	dict:map(fun(_, Socket) -> 
 			gen_tcp:close(Socket), 
 			Socket

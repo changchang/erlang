@@ -1,5 +1,5 @@
 -module(protocol).
--export([response/2, response/3, push/1, push/2, parse/1, newMsg/2]).
+-export([response/2, response/3, push/1, push/2, parse/1, new_msg/2]).
 -include("constant.hrl").
 -define(SEP, "|"). 
 
@@ -33,7 +33,7 @@ push(Type, Content) ->
 	<<Type:8/integer, Len:16/integer, Data/binary>>. 
 
 %% compose new message push message
-newMsg(Sender, Msg) -> 
+new_msg(Sender, Msg) -> 
 	Content = list_to_binary(io_lib:format("~ts|~ts", [Sender, Msg])), 
 	Len = byte_size(Content), 
 	<<?PRO_PSH_NEW_MSG:8/integer, Len:16/integer, Content/binary>>.
@@ -49,7 +49,7 @@ newMsg(Sender, Msg) ->
 %% return: {Type, {body, ...}} or {error, bad_package}		
 parse(Pkg) -> 
 	case Pkg of 
-		<<Type:8/integer, _:16/integer, Body/binary>> -> 
+		<<Type:8/integer, Len:16/integer, Body:Len/binary>> -> 
 			{Type, {body, binary_to_list(Body)}};
 		_ -> 
 			{error, bad_package}

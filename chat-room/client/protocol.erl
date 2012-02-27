@@ -41,10 +41,10 @@ parse(Pkg) ->
 			if
 				Type < ?PRO_SEP ->
 					% is response
-					parseResponse(Type, Body);
+					parse_response(Type, Body);
 				Type > ?PRO_SEP -> 
 					% is push message
-					parsePushMsg(Type, Body);
+					parse_push_msg(Type, Body);
 				true -> 
 					{error, bad_package}
 			end;
@@ -57,10 +57,9 @@ parse(Pkg) ->
 
 %% parse server response
 %% return: {Type, Code, {body, ...}}
-parseResponse(Type, Pkg) -> 
+parse_response(Type, Pkg) -> 
 	case Pkg of 
-		% ignore  length segment
-		<<Code:8/integer, _:16/integer, Content/binary>> -> 
+		<<Code:8/integer, Len:16/integer, Content:Len/binary>> -> 
 			% with content
 			{Type, Code, {body, binary_to_list(Content)}};
 		<<Code:8/integer>> -> 
@@ -72,12 +71,12 @@ parseResponse(Type, Pkg) ->
 
 %% parse server push message
 %% return: {Type, {body, ...}}
-parsePushMsg(Type, Pkg) -> 
+parse_push_msg(Type, Pkg) -> 
 	case Pkg of 
 		<<_:16/integer, Content/binary>> -> 
 			case Type of 
 				?PRO_PSH_NEW_MSG -> 
-					parseNewMsg(Type, Content);
+					parse_new_msg(Type, Content);
 				_ -> 
 					{Type, {body, binary_to_list(Content)}}
 			end;
@@ -87,7 +86,7 @@ parsePushMsg(Type, Pkg) ->
 
 %% parse new message push
 %% return: {Type, {body, SenderName, Content}}
-parseNewMsg(Type, Pkg) -> 
+parse_new_msg(Type, Pkg) -> 
 	Body = binary_to_list(Pkg), 
 	Index = string:str(Body, ?SEP), 
 	if 

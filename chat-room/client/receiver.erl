@@ -18,5 +18,6 @@ loop(Socket) ->
 					loop(Socket)
 			end;
 		{error, Reason} -> 
-			io:format("socket close, Reason=~p~n", [Reason])
+			io:format("socket close, Reason=~p~n", [Reason]), 
+			gen_tcp:close(Socket)
 	end.
